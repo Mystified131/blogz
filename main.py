@@ -50,8 +50,7 @@ def newpost():
             new_entry = Blog(name, entry)
             db.session.add(new_entry)
             db.session.commit()
-            newentry = db.session.query(id)
-            return redirect("/Blog?id=" + newentry)
+            return render_template('entry2.html', name = name, entry = entry)
 
     return render_template('newpost.html', errorname = "", errorentry = "")
 
