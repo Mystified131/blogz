@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Add New Post</h1>
+    <form method='post'>
+        <label>
+            Entry Name: 
+           <input type="text" name='name' /> {{errorname}}
+        </label>
+        <br><br>
+        <label>
+            New Task: 
+            <input type="text" name='entry' /> {{errorentry}}
+        </label>
+        <br><br>
+        <input type="submit" value='Add Entry' />
+    </form>
+
+{% endblock %}

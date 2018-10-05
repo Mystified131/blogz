@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Your Blog</h1>
+
+    {% if entries|length == 0 %}
+    <p>No entries yet</p>
+    {% else %}
+
+        <ul>
+            {% for entry in entries %}
+            <li><h3>{{entry.name}}</h3>
+                    {{entry.entry}}
+            </li>
+            <br>
+            {% endfor %}
+        </ul>
+
+    {% endif %}
+
+{% endblock %}
