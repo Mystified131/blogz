@@ -15,11 +15,13 @@ class Blog(db.Model):
     name = db.Column(db.String(120))
     entry = db.Column(db.String(120))
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    email = db.Column(db.String(120))
 
-    def __init__(self, name, entry, owner_id):
+    def __init__(self, name, entry, owner_id, email):
         self.name = name
         self.entry = entry
         self.owner_id = owner_id
+        self.email = email
 
 class User(db.Model):
 
@@ -122,15 +124,18 @@ def newpost():
         entry = request.form['entry']
         owner = User.query.filter_by(email=session['email']).first()
         owner_id = owner.id
+        email = owner.email
         if not entry:
             errorentry = "Please submit and entry for the post"
         if errorname or errorentry:
             return render_template('newpost.html', errorname = errorname, errorentry = errorentry)
         else:
-            new_entry = Blog(name, entry, owner_id)
+            new_entry = Blog(name, entry, owner_id, email)
             db.session.add(new_entry)
             db.session.commit()
-            return render_template('entry2.html', name = name, entry = entry)
+            user = User.query.filter_by(id = owner_id).first()
+            email = user.email
+            return render_template('entry2.html', name = name, entry = entry, new_entry = new_entry, email = email)
 
     return render_template('newpost.html', errorname = "", errorentry = "")
 

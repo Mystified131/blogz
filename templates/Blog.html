@@ -10,7 +10,8 @@
         <ul>
             {% for entry in entries %}
             <li><h3><a href = "/Blog?id={{entry.id}}">{{entry.name}}</a></h3>
-                    {{entry.entry}}
+                    {{entry.entry}}<br>
+                 <h5>Written by User: <a href = "/Blog?id={{entry.owner_id}}">{{entry.email}}</a></h5>
             </li>
             <br>
             {% endfor %}
