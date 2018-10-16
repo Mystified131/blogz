@@ -1,5 +1,6 @@
 from flask import Flask, request, redirect, render_template, session, flash
 from flask_sqlalchemy import SQLAlchemy
+import hashlib, random, string
 
 app = Flask(__name__)
 app.config['DEBUG'] = True
@@ -34,6 +35,20 @@ class User(db.Model):
         self.email = email
         self.password = password
 
+def make_salt():
+    return ''.join([random.choice(string.ascii_letters) for x in range(5)])
+
+def make_pw_hash(password):
+    hash = hashlib.sha256(str.encode(password)).hexdigest()
+    return hash
+
+def check_pw_hash(password, hash):
+    hash2 = hash[5:]
+    if make_pw_hash(password) == hash2:
+        return True
+    else:
+        return False
+
 @app.before_request
 def require_login():
     allowed_routes = ['login', 'signup', 'index', 'Blog']
@@ -46,7 +61,7 @@ def login():
         email = request.form['email']
         password = request.form['password']
         user = User.query.filter_by(email=email).first()
-        if user and user.password == password:
+        if user and check_pw_hash(password, user.password):
             session['email'] = email
             flash("Logged in")
             return redirect('/newpost')
@@ -72,6 +87,9 @@ def signup():
             return redirect('/signup')
         existing_user = User.query.filter_by(email=email).first()
         if not existing_user:
+            salt = make_salt()
+            hash = make_pw_hash(password)
+            password = salt + hash
             new_user = User(email, password)
             db.session.add(new_user)
             db.session.commit()
