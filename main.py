@@ -1,6 +1,6 @@
 from flask import Flask, request, redirect, render_template, session, flash
 from flask_sqlalchemy import SQLAlchemy
-import hashlib, random, string
+import hashlib, random, string, datetime
 
 app = Flask(__name__)
 app.config['DEBUG'] = True
@@ -29,15 +29,22 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True)
     password = db.Column(db.String(120))
+    reg_tim = db.Column(db.String(120))
     blogs = db.relationship('Blog', backref='owner')
 
-    def __init__(self, email, password):
+    def __init__(self, email, password, reg_tim):
         self.email = email
         self.password = password
+        self.reg_tim = reg_tim
 
 def make_salt():
-    return ''.join([random.choice(string.ascii_letters) for x in range(5)])
-
+    sal = ""
+    for elem in range(5):
+        num1 = random.randrange(9)
+        num2 = str(num1)
+        sal += num2
+    return sal
+    
 def make_pw_hash(password):
     hash = hashlib.sha256(str.encode(password)).hexdigest()
     return hash
@@ -48,6 +55,17 @@ def check_pw_hash(password, hash):
         return True
     else:
         return False
+
+def retrieve_date():
+    right_now = datetime.datetime.now().isoformat()
+    list = []
+
+    for i in right_now:
+        if i.isnumeric():
+           list.append(i)
+
+    tim = "".join(list)
+    return tim
 
 @app.before_request
 def require_login():
@@ -87,10 +105,11 @@ def signup():
             return redirect('/signup')
         existing_user = User.query.filter_by(email=email).first()
         if not existing_user:
+            reg_tim = retrieve_date()
             salt = make_salt()
             hash = make_pw_hash(password)
             password = salt + hash
-            new_user = User(email, password)
+            new_user = User(email, password, reg_tim)
             db.session.add(new_user)
             db.session.commit()
             session['email'] = email
