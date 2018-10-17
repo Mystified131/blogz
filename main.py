@@ -27,14 +27,16 @@ class Blog(db.Model):
 class User(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), unique=True)
+    email = db.Column(db.String(120))
     password = db.Column(db.String(120))
+    birthday = db.Column(db.String(10))
     reg_tim = db.Column(db.String(120))
     blogs = db.relationship('Blog', backref='owner')
 
-    def __init__(self, email, password, reg_tim):
+    def __init__(self, email, password, birthday, reg_tim):
         self.email = email
         self.password = password
+        self.birthday = birthday
         self.reg_tim = reg_tim
 
 def make_salt():
@@ -77,10 +79,12 @@ def require_login():
 def login():
     if request.method == 'POST':
         email = request.form['email']
+        birthday = request.form['birthday']
         password = request.form['password']
-        user = User.query.filter_by(email=email).first()
+        user = User.query.filter_by(email=email, birthday = birthday).first()
         if user and check_pw_hash(password, user.password):
             session['email'] = email
+            session['birthday'] = user.birthday
             flash("Logged in")
             return redirect('/newpost')
         elif not user:
@@ -95,6 +99,7 @@ def login():
 def signup():
     if request.method == 'POST':
         email = request.form['email']
+        birthday = request.form['birthday']
         password = request.form['password']
         verify = request.form['verify']
         if not email or not password or not verify:
@@ -103,16 +108,20 @@ def signup():
         if password != verify:
             flash("Password and Password Verify fields do not match")
             return redirect('/signup')
-        existing_user = User.query.filter_by(email=email).first()
+        if len(birthday) != 10 or birthday.count("/") != 2:
+            flash("Please fill in a birthday date in form mm/dd/yyyy")
+            return redirect('/signup')
+        existing_user = User.query.filter_by(email=email, birthday=birthday).first()
         if not existing_user:
             reg_tim = retrieve_date()
             salt = make_salt()
             hash = make_pw_hash(password)
             password = salt + hash
-            new_user = User(email, password, reg_tim)
+            new_user = User(email, password, birthday, reg_tim)
             db.session.add(new_user)
             db.session.commit()
             session['email'] = email
+            session['birthday'] = birthday
             flash("Signed In")
             return redirect('/newpost')
         else:
@@ -159,7 +168,7 @@ def newpost():
         if not name:
             errorname = "Please submit a name for the post"
         entry = request.form['entry']
-        owner = User.query.filter_by(email=session['email']).first()
+        owner = User.query.filter_by(email=session['email'], birthday=session['birthday']).first()
         owner_id = owner.id
         email = owner.email
         if not entry:
